@@ -100,29 +100,46 @@ def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
     return (pad_sequences(X, maxlen=story_maxlen),
             pad_sequences(Xq, maxlen=query_maxlen), np.array(Y))
 
-try:
-    path = get_file('babi-tasks-v1-2.tar.gz', origin='https://s3.amazonaws.com/text-datasets/babi_tasks_1-20_v1-2.tar.gz')
-except:
-    print('Error downloading dataset, please download it manually:\n'
-          '$ wget http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz\n'
-          '$ mv tasks_1-20_v1-2.tar.gz ~/.keras/datasets/babi-tasks-v1-2.tar.gz')
-    raise
+# try:
+#     path = get_file('babi-tasks-v1-2.tar.gz', origin='https://s3.amazonaws.com/text-datasets/babi_tasks_1-20_v1-2.tar.gz')
+# except:
+#     print('Error downloading dataset, please download it manually:\n'
+#           '$ wget http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz\n'
+#           '$ mv tasks_1-20_v1-2.tar.gz ~/.keras/datasets/babi-tasks-v1-2.tar.gz')
+#     raise
 
 # path = os.path.join('.','babi-data','babi-tasks-v1-2.tar.gz')
-tar = tarfile.open(path)
+# tar = tarfile.open(path)
+# challenges = {
+#     # QA1 with 10,000 samples
+#     'single_supporting_fact_10k': 'tasks_1-20_v1-2/en-10k/qa1_single-supporting-fact_{}.txt',
+#     # QA2 with 10,000 samples
+#     'two_supporting_facts_10k': 'tasks_1-20_v1-2/en-10k/qa2_two-supporting-facts_{}.txt',
+# }
+# train_stories = get_stories(tar.extractfile(challenge.format('train')))
+# test_stories = get_stories(tar.extractfile(challenge.format('test')))
+
+dirpath = os.path.join('/babi-tasks','babi', 'tasks_1-20_v1-2','en-10k')
+single-fact-path = os.path.join(dirpath,'qa1_single-supporting-fact_{}.txt' )
+two-fact-path = os.path.join(dirpath, 'qa2_two-supporting-facts_{}.txt'
+  )
 
 challenges = {
     # QA1 with 10,000 samples
-    'single_supporting_fact_10k': 'tasks_1-20_v1-2/en-10k/qa1_single-supporting-fact_{}.txt',
+    'single_supporting_fact_10k': single-fact-path,
     # QA2 with 10,000 samples
-    'two_supporting_facts_10k': 'tasks_1-20_v1-2/en-10k/qa2_two-supporting-facts_{}.txt',
+    'two_supporting_facts_10k': two-fact-path,
 }
+
+
 challenge_type = 'single_supporting_fact_10k'
 challenge = challenges[challenge_type]
 
 print('Extracting stories for the challenge:', challenge_type)
-train_stories = get_stories(tar.extractfile(challenge.format('train')))
-test_stories = get_stories(tar.extractfile(challenge.format('test')))
+
+
+train_stories = get_stories(challenge.format('train'))
+test_stories = get_stories(challenge.format('test'))
 
 vocab = set()
 for story, q, answer in train_stories + test_stories:
