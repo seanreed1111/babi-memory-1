@@ -235,6 +235,7 @@ model.fit([inputs_train, queries_train], answers_train,
           batch_size=32,
           epochs=500,
           validation_data=([inputs_test, queries_test], answers_test),
-          callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=70, verbose=1, mode='auto')]
+          verbose=0, #logs are too long for floydhub
+          callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=70, verbose=0, mode='auto')]
          )
 model.save('babi_single_fact.h5')
