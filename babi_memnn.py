@@ -20,12 +20,11 @@ from keras.layers import Input, Activation, Dense, Permute, Dropout, add, dot, c
 from keras.layers import LSTM
 from keras.utils.data_utils import get_file
 from keras.preprocessing.sequence import pad_sequences
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from functools import reduce
-import tarfile
 import numpy as np
-import re
-import os
+import h5py
+import os, re
 
 
 def tokenize(sent):
@@ -100,25 +99,6 @@ def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
         Y.append(y)
     return (pad_sequences(X, maxlen=story_maxlen),
             pad_sequences(Xq, maxlen=query_maxlen), np.array(Y))
-
-# try:
-#     path = get_file('babi-tasks-v1-2.tar.gz', origin='https://s3.amazonaws.com/text-datasets/babi_tasks_1-20_v1-2.tar.gz')
-# except:
-#     print('Error downloading dataset, please download it manually:\n'
-#           '$ wget http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz\n'
-#           '$ mv tasks_1-20_v1-2.tar.gz ~/.keras/datasets/babi-tasks-v1-2.tar.gz')
-#     raise
-
-# path = os.path.join('.','babi-data','babi-tasks-v1-2.tar.gz')
-# tar = tarfile.open(path)
-# challenges = {
-#     # QA1 with 10,000 samples
-#     'single_supporting_fact_10k': 'tasks_1-20_v1-2/en-10k/qa1_single-supporting-fact_{}.txt',
-#     # QA2 with 10,000 samples
-#     'two_supporting_facts_10k': 'tasks_1-20_v1-2/en-10k/qa2_two-supporting-facts_{}.txt',
-# }
-# train_stories = get_stories(tar.extractfile(challenge.format('train')))
-# test_stories = get_stories(tar.extractfile(challenge.format('test')))
 
 dirpath = os.path.join('/babi-tasks','babi', 'tasks_1-20_v1-2','en-10k')
 single_fact_path = os.path.join(dirpath,'qa1_single-supporting-fact_{}.txt')
@@ -247,13 +227,14 @@ answer = Activation('softmax')(answer)
 
 # build the final model
 model = Model([input_sequence, question], answer)
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy',
+model.compile(optimizer='nadam', loss='categorical_crossentropy',
               metrics=['accuracy'])
 
 # train
 model.fit([inputs_train, queries_train], answers_train,
-          batch_size=1000,
-          epochs=200,
+          batch_size=32,
+          epochs=500,
           validation_data=([inputs_test, queries_test], answers_test),
-          callbacks=[ModelCheckpoint('weights-job6-epoch{epoch:02d}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=5)]
+          callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=70, verbose=1, mode='auto')]
          )
+model.save('babi_single_fact.h5')
